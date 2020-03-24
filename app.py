@@ -1,13 +1,16 @@
 # coding: utf-8
+import os
 import requests
 import xml.etree.ElementTree as et
-import os
 
 flg_debug = True
 url_watching = ''
 url_my_ticket = ''
 base_path = './entries'
 url_slack_webhook = ''
+
+monitoring_ticket_ids = []
+notify_tickets = []
 
 
 def log(s):
@@ -46,22 +49,24 @@ def checkAtom(a):
 
 
 def checkUpdated(ti, tu, tt):
-    filename = base_path + '/' + ti.split('/')[-1]
-    if os.path.isfile(filename):
+    ticket_id = ti.split('/')[-1]
+    filename = base_path + '/' + ticket_id
+    if ticket_id in monitoring_ticket_ids:
         # check update
         last_updated = getLastUpdate(filename)
         if tu != last_updated:
             # updated
             log('updated')
-            doNotify(ti, tt)
+            setNotify(ti, tt)
             saveEntry(filename, tu)
         else:
             # no update
             log('no update')
+        monitoring_ticket_ids.remove(ticket_id)
     else:
         # new ticket
         log('new ticket')
-        doNotify(ti, tt)
+        setNotify(ti, tt)
         saveEntry(filename, tu)
 
 
@@ -75,9 +80,17 @@ def getLastUpdate(fn):
     return lu
 
 
-def doNotify(ti, tt):
-    log('Notify: ' + ti)
-    message = '{"text": "Ticket updated: ' + tt + '\n' + ti + '"}'
+def setNotify(ti, tt):
+    notify_tickets.append({'id': ti, 'title': tt})
+
+
+def doNotify():
+    log('Notify')
+    message = '{"text": "Tickets updated.'
+    for m in notify_tickets:
+        message += '\n' + m['title'] + '\n' + m['id']
+    message += '"}'
+
     try:
         requests.post(url_slack_webhook, message.encode('utf-8'))
     except Exception as e:
@@ -92,6 +105,16 @@ def saveEntry(fn, tu):
         f.write(tu)
 
 
+def removeEntry(fn):
+    filename = base_path + '/' + fn
+    log('Remove: ' + filename)
+    os.remove(filename)
+
+
+# set monitoring ticket ids
+if os.path.isdir(base_path):
+    monitoring_ticket_ids = os.listdir(base_path)
+
 # watching ticket
 if url_watching != '':
     log('checking watching ticket')
@@ -104,3 +127,10 @@ if url_my_ticket != '':
     response = getAtom(url_my_ticket)
     checkAtom(response.content)
 
+if len(notify_tickets) > 0:
+    doNotify()
+
+if len(monitoring_ticket_ids) > 0:
+    # closed ticket
+    for i in monitoring_ticket_ids:
+        removeEntry(i)
