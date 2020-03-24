@@ -1,0 +1,9 @@
+{
+  "url_redmine": "http://example.com",
+  "redmine_api_key": "YOUR_API_KEY",
+  "atom_urls": [
+    "http://example.com/issues.atom?foo=bar",
+    "http://example.com/issues.atom?foo=baz"
+  ],
+  "url_slack_webhook": "http://example.com"
+}

@@ -4,15 +4,10 @@ import requests
 import xml.etree.ElementTree as et
 import json
 
-flg_debug = False
-url_redmine = ''
-url_redmine_issue = url_redmine + '/issues'
-url_watching = ''
-url_my_ticket = ''
+flg_debug = True
 base_path = './entries'
-url_slack_webhook = ''
-redmine_api_key = ''
 
+configure = {}
 monitoring_ticket_ids = []
 notify_tickets = []
 
@@ -89,8 +84,8 @@ def getLastUpdate(filename):
 def getUpdatedOn(ticket_id):
     lu = ''
     try:
-        u = url_redmine_issue + '/' + ticket_id + '.json' \
-                                                  '?key=' + redmine_api_key
+        u = configure['url_redmine'] + '/issues/' + ticket_id + '.json' \
+                                                  '?key=' + configure['redmine_api_key']
         r = requests.get(u)
         ticket_detail = json.loads(r.content)
         lu = ticket_detail['issue']['updated_on']
@@ -111,7 +106,7 @@ def doNotify():
     message += '"}'
 
     try:
-        requests.post(url_slack_webhook, message.encode('utf-8'))
+        requests.post(configure['url_slack_webhook'], message.encode('utf-8'))
     except Exception as e:
         log(e)
 
@@ -130,26 +125,21 @@ def removeEntry(fn):
     os.remove(filename)
 
 
+# set configure
+with open('./configure.json', 'r') as f:
+    configure = json.loads(f.read())
+
 # set monitoring ticket ids
 if os.path.isdir(base_path):
     monitoring_ticket_ids = os.listdir(base_path)
 
-# watching ticket
-if url_watching != '':
-    log('checking watching ticket')
-    response = getAtom(url_watching)
-    checkAtom(response.content)
-
-# my ticket
-if url_my_ticket != '':
-    log('checking my ticket')
-    response = getAtom(url_my_ticket)
+for url in configure['atom_urls']:
+    response = getAtom(url)
     checkAtom(response.content)
 
 if len(notify_tickets) > 0:
     doNotify()
 
 if len(monitoring_ticket_ids) > 0:
-    # closed ticket
     for i in monitoring_ticket_ids:
         removeEntry(i)
