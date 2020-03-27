@@ -44,21 +44,21 @@ class Utils:
         root = eT.fromstring(atom)
         for c in root:
             if 'entry' in c.tag:
-                ticket_id = ''
+                ticket_url = ''
                 ticket_title = ''
                 for e in c:
                     if 'id' in e.tag:
-                        ticket_id = e.text
+                        ticket_url = e.text
                     if 'title' in e.tag:
                         ticket_title = e.text
-                if ticket_id != '':
+                if ticket_url != '':
                     self.checkUpdated(
-                        ticket_id,
+                        ticket_url,
                         ticket_title
                     )
 
-    def checkUpdated(self, ticket_id, ticket_title):
-        ticket_id = ticket_id.split('/')[-1]
+    def checkUpdated(self, ticket_url, ticket_title):
+        ticket_id = ticket_url.split('/')[-1]
         filename = self.base_path + '/' + ticket_id
         if ticket_id in self.monitoring_ticket_ids:
             # check update
@@ -67,7 +67,7 @@ class Utils:
             if updated_on != last_updated:
                 # updated
                 self.log('updated')
-                self.setNotify(ticket_id, ticket_title)
+                self.setNotify(ticket_url, ticket_title)
                 self.saveEntry(filename, updated_on)
             else:
                 # no update
@@ -77,7 +77,7 @@ class Utils:
             # new ticket
             self.log('new ticket')
             updated_on = self.getUpdatedOn(ticket_id)
-            self.setNotify(ticket_id, ticket_title)
+            self.setNotify(ticket_url, ticket_title)
             self.saveEntry(filename, updated_on)
 
     def getLastUpdate(self, filename):
