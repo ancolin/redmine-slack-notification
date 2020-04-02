@@ -11,6 +11,7 @@ class Utils:
 
     configure = {}
     monitoring_ticket_ids = []
+    checked_ticket_ids = []
     notify_tickets = []
 
     def setFlgDebug(self, flg=False):
@@ -72,7 +73,7 @@ class Utils:
             else:
                 # no update
                 self.log('no update')
-            self.monitoring_ticket_ids.remove(ticket_id)
+            self.checked_ticket_ids.append(ticket_id)
         else:
             # new ticket
             self.log('new ticket')
@@ -108,9 +109,14 @@ class Utils:
         if len(self.notify_tickets) > 0:
             self.doNotify()
 
-        if len(self.monitoring_ticket_ids) > 0:
-            for i in self.monitoring_ticket_ids:
-                self.removeEntry(i)
+        if len(self.checked_ticket_ids) > 0:
+            for checked_id in self.checked_ticket_ids:
+                if checked_id in self.monitoring_ticket_ids:
+                    self.monitoring_ticket_ids.remove(checked_id)
+
+            if len(self.monitoring_ticket_ids) > 0:
+                for i in self.monitoring_ticket_ids:
+                    self.removeEntry(i)
 
     def doNotify(self):
         self.log('Notify')
