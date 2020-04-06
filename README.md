@@ -1,4 +1,4 @@
-# rss-reader-for-redmine
+# redmine-slack-notification
 
 ## dependencies
 * Python 3.6
